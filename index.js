@@ -155,54 +155,75 @@ client.on("interactionCreate", async (interaction) => {
                     `${eventMessage}\n유지비로 5코인이 차감되었습니다.\n현재 가치: ${company.value}코인`
                 );
 
-            const fin = new ButtonBuilder()
-                .setCustomId("exitInvestment")
-                .setLabel("사업 철수")
-                .setStyle("Danger");
-
-            const row = new ActionRowBuilder().addComponents(fin);
-            const respond = await interaction.editReply({
-                embeds: [embed],
-                components: [row],
-            });
             const collectorFilter = (i) => i.user.id === interaction.user.id;
+            if (eventChance < 5) {
+                // 파산
+                company.value = 0;
+                eventMessage = "파산했습니다! 회사 가치가 0이 되었습니다.";
+                const earnings = company.value;
+                companies.delete(interaction.guildId);
 
-            try {
-                const confirmation = await respond.awaitMessageComponent({
-                    filter: collectorFilter,
-                    time: 10_000,
+                const embed = new EmbedBuilder()
+                    .setTitle("사업 파산!")
+                    .setDescription(
+                        `**${company.companyName}**에서 ${earnings}코인을 얻었습니다.`
+                    );
+
+                await interaction.editReply({
+                    embeds: [embed],
                 });
+            } else {
+                const fin = new ButtonBuilder()
+                    .setCustomId("exitInvestment")
+                    .setLabel("사업 철수")
+                    .setStyle("Danger");
 
-                if (confirmation.customId === "exitInvestment") {
-                    const earnings = company.value;
-                    companies.delete(interaction.guildId);
-
-                    const embed = new EmbedBuilder()
-                        .setTitle("사업 철수!")
-                        .setDescription(
-                            `**${company.companyName}**에서 ${earnings}코인을 얻었습니다.`
-                        );
-                    const fin = new ButtonBuilder()
-                        .setCustomId("exitInvestment")
-                        .setLabel("사업 철수")
-                        .setStyle("Danger")
-                        .setDisabled(true);
-
-                    const row = new ActionRowBuilder().addComponents(fin);
-
-                    await interaction.editReply({
-                        embeds: [embed],
-                        components: [row],
+                const row = new ActionRowBuilder().addComponents(fin);
+                const respond = await interaction.editReply({
+                    embeds: [embed],
+                    components: [row],
+                });
+                try {
+                    const confirmation = await respond.awaitMessageComponent({
+                        filter: collectorFilter,
+                        time: 10_000,
                     });
-                    await confirmation.update({
-                        components: [],
-                    });
+
+                    if (confirmation.customId === "exitInvestment") {
+                        const earnings = company.value;
+                        companies.delete(interaction.guildId);
+
+                        const embed = new EmbedBuilder()
+                            .setTitle("사업 철수!")
+                            .setDescription(
+                                `**${company.companyName}**에서 ${earnings}코인을 얻었습니다.`
+                            );
+                        const fin = new ButtonBuilder()
+                            .setCustomId("exitInvestment")
+                            .setLabel("사업 철수")
+                            .setStyle("Danger")
+                            .setDisabled(true);
+
+                        const row = new ActionRowBuilder().addComponents(fin);
+
+                        await interaction.editReply({
+                            embeds: [embed],
+                            components: [row],
+                        });
+                        await confirmation.update({
+                            components: [],
+                        });
+                    }
+                } catch (e) {
+                    setTimeout(
+                        () =>
+                            startTurn(
+                                interaction.guildId,
+                                interaction.channelId
+                            ),
+                        0
+                    );
                 }
-            } catch (e) {
-                setTimeout(
-                    () => startTurn(interaction.guildId, interaction.channelId),
-                    0
-                );
             }
         };
 
