@@ -66,7 +66,7 @@ client.on("interactionCreate", async (interaction) => {
         const fin = new ButtonBuilder()
             .setCustomId("exitInvestment")
             .setLabel("사업 철수")
-            .setStyle(ButtonStyle.Secondary);
+            .setStyle("Danger");
 
         const row = new ActionRowBuilder().addComponents(fin);
         const respond = await interaction.reply({
@@ -93,6 +93,18 @@ client.on("interactionCreate", async (interaction) => {
                 // 파산
                 company.value = 0;
                 eventMessage = "파산했습니다! 회사 가치가 0이 되었습니다.";
+                const earnings = company.value;
+                companies.delete(interaction.guildId);
+
+                const embed = new EmbedBuilder()
+                    .setTitle("사업 파산!")
+                    .setDescription(
+                        `**${company.companyName}**에서 ${earnings}코인을 얻었습니다.`
+                    );
+
+                await interaction.editReply({
+                    embeds: [embed],
+                });
             } else if (eventChance < 25) {
                 // 손해
                 const lossPercentage = Math.floor(
@@ -192,7 +204,6 @@ client.on("interactionCreate", async (interaction) => {
                     0
                 );
             }
-
         };
 
         startTurn();
